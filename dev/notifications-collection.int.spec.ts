@@ -22,12 +22,19 @@ describe('createNotificationsCollection', () => {
     expect(c.admin?.hidden).toBe(true)
   })
 
-  test('message field uses the custom list cell (link to target, not edit)', () => {
+  test('message field has no custom Cell (full list view replaces the table)', () => {
     const c = createNotificationsCollection(sanitizeConfig({}))
     const message = c.fields.find((f) => 'name' in f && f.name === 'message') as any
-    expect(message.admin.components.Cell).toBe(
-      '@elghaied/payload-plugin-notifications/client#NotificationCell',
+    expect(message.admin?.components?.Cell).toBeUndefined()
+  })
+
+  test('list view is replaced with NotificationsListView (carrying the slug)', () => {
+    const c = createNotificationsCollection(sanitizeConfig({ notificationsSlug: 'notes' }))
+    const list = (c.admin?.components?.views as any)?.list
+    expect(list.Component.path).toBe(
+      '@elghaied/payload-plugin-notifications/client#NotificationsListView',
     )
+    expect(list.Component.clientProps).toEqual({ slug: 'notes' })
   })
 
   test('multi-tenant: adds a required tenant relationship field', () => {

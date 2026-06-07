@@ -1,2 +1,2 @@
 export { NotificationBell } from '../components/NotificationBell.js'
-export { NotificationCell } from '../components/NotificationCell.js'
+export { NotificationsListView } from '../components/NotificationsListView.js'

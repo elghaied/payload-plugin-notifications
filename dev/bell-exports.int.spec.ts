@@ -7,7 +7,10 @@ describe('client exports', () => {
     expect(client.NotificationBell).toBeDefined()
   })
 
-  test('NotificationCell is exported', () => {
-    expect(client.NotificationCell).toBeDefined()
+  test('NotificationsListView is exported', () => {
+    expect(client.NotificationsListView).toBeDefined()
+  })
+  test('NotificationCell is no longer exported', () => {
+    expect((client as Record<string, unknown>).NotificationCell).toBeUndefined()
   })
 })

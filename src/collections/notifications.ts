@@ -44,6 +44,16 @@ export const createNotificationsCollection = (config: SanitizedConfig): Collecti
       update: ownRows,
     },
     admin: {
+      components: {
+        views: {
+          list: {
+            Component: {
+              clientProps: { slug: notificationsSlug },
+              path: '@elghaied/payload-plugin-notifications/client#NotificationsListView',
+            },
+          },
+        },
+      },
       defaultColumns: ['message', 'type', 'read', 'createdAt'],
       hidden: hideFromNav,
       useAsTitle: 'message',
@@ -57,18 +67,7 @@ export const createNotificationsCollection = (config: SanitizedConfig): Collecti
         required: true,
       },
       ...tenantField,
-      {
-        name: 'message',
-        type: 'text',
-        admin: {
-          components: {
-            // Render the message as a link to the notification's `link` target in the list
-            // view, replacing Payload's default link-to-edit-view cell.
-            Cell: '@elghaied/payload-plugin-notifications/client#NotificationCell',
-          },
-        },
-        required: true,
-      },
+      { name: 'message', type: 'text', required: true },
       { name: 'link', type: 'text' },
       {
         name: 'type',
