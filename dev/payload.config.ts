@@ -1,6 +1,5 @@
 import { mongooseAdapter } from '@payloadcms/db-mongodb'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
-import { MongoMemoryReplSet } from 'mongodb-memory-server'
 import path from 'path'
 import { buildConfig } from 'payload'
 import { payloadPluginNotifications } from 'payload-plugin-notifications'
@@ -17,16 +16,25 @@ if (!process.env.ROOT_DIR) {
   process.env.ROOT_DIR = dirname
 }
 
-const buildConfigWithMemoryDB = async () => {
-  if (process.env.NODE_ENV === 'test') {
-    const memoryDB = await MongoMemoryReplSet.create({
-      replSet: {
-        count: 3,
-        dbName: 'payloadmemory',
-      },
-    })
+// Self-contained, single-adapter Mongo harness (no Docker, no external service).
+//
+// - If you set DATABASE_URI yourself, we use that real Mongo.
+// - Otherwise, the app (pnpm dev / pnpm start) and the test runner spin up a single-node
+//   in-memory replica set. That path is gated on an explicit flag — PAYLOAD_MEMORY_DB (set by
+//   the dev/start scripts) or VITEST (set by Vitest) — so one-shot CLI commands like
+//   generate:types / generate:importmap NEVER spawn an untracked mongod that pins the CPU.
+//   Those commands don't need a DB and fail fast via serverSelectionTimeoutMS if none is up.
+const buildConfigWithDB = async () => {
+  const externalURI = process.env.DATABASE_URI || process.env.DATABASE_URL
+  const wantsMemoryDB = Boolean(process.env.VITEST || process.env.PAYLOAD_MEMORY_DB)
+  let url = externalURI || ''
 
-    process.env.DATABASE_URL = `${memoryDB.getUri()}&retryWrites=true`
+  if (!externalURI && wantsMemoryDB) {
+    const { MongoMemoryReplSet } = await import('mongodb-memory-server')
+    const memoryDB = await MongoMemoryReplSet.create({
+      replSet: { count: 1, dbName: 'payloadtest' },
+    })
+    url = `${memoryDB.getUri()}&retryWrites=true`
   }
 
   return buildConfig({
@@ -35,35 +43,18 @@ const buildConfigWithMemoryDB = async () => {
         baseDir: path.resolve(dirname),
       },
     },
-    collections: [
-      {
-        slug: 'posts',
-        fields: [],
-      },
-      {
-        slug: 'media',
-        fields: [],
-        upload: {
-          staticDir: path.resolve(dirname, 'media'),
-        },
-      },
-    ],
+    collections: [],
     db: mongooseAdapter({
+      connectOptions: { serverSelectionTimeoutMS: 2000 },
       ensureIndexes: true,
-      url: process.env.DATABASE_URL || '',
+      url,
     }),
     editor: lexicalEditor(),
     email: testEmailAdapter,
     onInit: async (payload) => {
       await seed(payload)
     },
-    plugins: [
-      payloadPluginNotifications({
-        collections: {
-          posts: true,
-        },
-      }),
-    ],
+    plugins: [payloadPluginNotifications({})],
     secret: process.env.PAYLOAD_SECRET || 'test-secret_key',
     sharp,
     typescript: {
@@ -72,4 +63,4 @@ const buildConfigWithMemoryDB = async () => {
   })
 }
 
-export default buildConfigWithMemoryDB()
+export default buildConfigWithDB()

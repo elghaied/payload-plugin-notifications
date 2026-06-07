@@ -23,6 +23,9 @@ export const defaultESLintIgnores = [
 ]
 
 export default [
+  // The template declares defaultESLintIgnores but never applies it, so eslint lints dist/
+  // build output and chokes. Wire it in as a global ignores block.
+  { ignores: defaultESLintIgnores },
   ...payloadEsLintConfig,
   {
     rules: {
