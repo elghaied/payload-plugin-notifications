@@ -7,6 +7,7 @@
   /* Bell icon color — elevation-800 is dark in light mode, light in dark mode, so the
      inline SVG (fill: currentColor) keeps correct contrast against the header in both. */
   --pn-icon: var(--theme-elevation-800, #e3e3e6);
+  --pn-accent: var(--theme-success-500, #3b82f6);
   --pn-link: var(--theme-success-500, #1587ba);
   --pn-info: var(--theme-text-info, #60a5fa);
   --pn-warning: var(--theme-warning-500, #f59e0b);
@@ -44,14 +45,6 @@
   color: var(--pn-text-muted);
   border-bottom: 1px solid var(--pn-border);
 }
-.pn-item { display: flex; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--pn-border); cursor: pointer; }
-.pn-item:hover { background: var(--pn-bg-hover); }
-.pn-item--read { opacity: 0.6; }
-.pn-dot { flex: none; width: 8px; height: 8px; border-radius: 50%; margin-top: 6px; }
-.pn-dot--info { background: var(--pn-info); }
-.pn-dot--warning { background: var(--pn-warning); }
-.pn-dot--success { background: var(--pn-success); }
-.pn-meta { font-size: 11px; color: var(--pn-text-muted); margin-top: 3px; word-break: break-all; }
 .pn-empty { padding: 14px; color: var(--pn-text-muted); font-size: 13px; }
 
 /* "See all notifications" footer — sticky so it stays visible while the list scrolls */
@@ -70,7 +63,25 @@
 }
 .pn-seeall:hover { background: var(--pn-bg-hover); }
 
-/* List-view message cell rendered as a link to the notification target (not the edit view) */
-.pn-cell-link { color: var(--pn-link); text-decoration: none; }
-.pn-cell-link:hover { text-decoration: underline; }
-.pn-cell-link--read { color: inherit; opacity: 0.7; }
+/* notification row (shared by the dropdown + the list view) */
+.pn-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--pn-border);
+  border-left: 3px solid transparent;
+  color: var(--pn-text);
+  outline: none;
+}
+.pn-row:hover { background: var(--pn-bg-hover); }
+.pn-row:focus-visible { box-shadow: inset 0 0 0 2px var(--pn-accent); }
+.pn-row--dropdown { padding: 12px 14px 12px 11px; }
+.pn-row--list { padding: 14px 16px 14px 13px; }
+.pn-row--unread { border-left-color: var(--pn-accent); }
+.pn-row--unread .pn-row__msg { font-weight: 600; }
+.pn-row--read { opacity: 0.55; }
+.pn-row__msg { flex: 1; min-width: 0; font-size: 13px; line-height: 1.35; overflow-wrap: anywhere; }
+.pn-row--list .pn-row__msg { font-size: 14px; }
+.pn-row__time { flex: none; font-size: 11px; color: var(--pn-text-muted); white-space: nowrap; }
+.pn-row--list .pn-row__time { font-size: 12px; }
