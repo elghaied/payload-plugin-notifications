@@ -1,5 +1,9 @@
 # @elghaied/payload-plugin-notifications
 
+[![npm version](https://img.shields.io/npm/v/@elghaied/payload-plugin-notifications.svg)](https://www.npmjs.com/package/@elghaied/payload-plugin-notifications)
+[![npm downloads](https://img.shields.io/npm/dm/@elghaied/payload-plugin-notifications.svg)](https://www.npmjs.com/package/@elghaied/payload-plugin-notifications)
+[![license](https://img.shields.io/npm/l/@elghaied/payload-plugin-notifications.svg)](./LICENSE)
+
 In-dashboard notifications for the [Payload](https://payloadcms.com) admin, with a **live bell**
 that updates without a page refresh.
 
