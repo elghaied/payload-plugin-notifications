@@ -13,6 +13,14 @@ that updates without a page refresh.
 - 🔒 Notification `link`s are scheme-validated before navigation (no `javascript:`/`data:` XSS).
 - 🧩 Additive and **default-off**; **optional** multi-tenant scoping.
 
+## Screenshots
+
+| Bell dropdown | Custom list view |
+|---|---|
+| ![Notification bell dropdown open over the admin, showing recent notifications with relative timestamps](./assets/notifications_bell.png) | ![Custom notifications list view replacing Payload's default table](./assets/notifications_list.png) |
+
+Unread rows carry an accent bar and bolded text; read rows are dimmed. Times are compact and relative (`now`, `8m`, `3h`, `2d`, `1w`), with the full timestamp on hover.
+
 ## How it works
 
 Two decoupled layers:
