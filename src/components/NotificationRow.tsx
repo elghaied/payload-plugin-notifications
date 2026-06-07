@@ -1,6 +1,4 @@
 'use client'
-import * as React from 'react'
-
 import { formatRelative } from '../utilities/formatRelative.js'
 
 export type NotificationItem = {
@@ -46,7 +44,7 @@ export const NotificationRow = ({
       tabIndex={0}
     >
       <span className="pn-row__msg">{notification.message}</span>
-      <time className="pn-row__time" title={title}>
+      <time className="pn-row__time" dateTime={notification.createdAt} title={title}>
         {label}
       </time>
     </div>

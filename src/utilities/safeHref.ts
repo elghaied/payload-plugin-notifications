@@ -15,7 +15,9 @@ export const safeHref = (link: null | string | undefined): null | string => {
     return null
   }
   if (trimmed.startsWith('/')) {
-    return trimmed.startsWith('//') ? null : trimmed
+    // Reject protocol-relative ("//host") and backslash variants — browsers normalize
+    // "\" to "/", so "/\evil.com" would resolve to "//evil.com" (off-origin redirect).
+    return trimmed.startsWith('//') || trimmed.includes('\\') ? null : trimmed
   }
   try {
     const { protocol } = new URL(trimmed)

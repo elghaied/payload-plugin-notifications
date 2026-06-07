@@ -24,6 +24,15 @@ describe('safeHref', () => {
     expect(safeHref('//evil.com')).toBeNull()
   })
 
+  test('rejects backslash open-redirect variants (browsers normalize \\ to /)', () => {
+    expect(safeHref('/\\evil.com')).toBeNull()
+    expect(safeHref('/\\/evil.com')).toBeNull()
+    expect(safeHref('/\\\\evil.com')).toBeNull()
+    expect(safeHref('/admin/x\\y')).toBeNull()
+    // legit relative paths still allowed
+    expect(safeHref('/admin/collections/posts/123')).toBe('/admin/collections/posts/123')
+  })
+
   test('rejects empty / missing', () => {
     expect(safeHref(undefined)).toBeNull()
     expect(safeHref(null)).toBeNull()
