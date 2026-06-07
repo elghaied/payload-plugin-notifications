@@ -45,9 +45,10 @@ export const payloadPluginNotifications =
     if (!config.admin.components.actions) {
       config.admin.components.actions = []
     }
-    config.admin.components.actions.push(
-      '@elghaied/payload-plugin-notifications/client#NotificationBell',
-    )
+    config.admin.components.actions.push({
+      clientProps: { slug: sanitized.notificationsSlug },
+      path: '@elghaied/payload-plugin-notifications/client#NotificationBell',
+    })
 
     return config
   }

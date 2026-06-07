@@ -15,6 +15,7 @@ export const createNotificationsCollection = (config: SanitizedConfig): Collecti
     const base = recipientWhere(user.id)
     if (tenants) {
       const tenantValue = (user as Record<string, unknown>)[tenants.tenantFieldName]
+      if (tenantValue === undefined || tenantValue === null) { return false }
       return { and: [base, { [tenants.tenantFieldName]: { equals: tenantValue } }] }
     }
     return base

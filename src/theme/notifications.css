@@ -7,7 +7,6 @@
   --pn-info: var(--theme-text-info, #60a5fa);
   --pn-warning: var(--theme-warning-500, #f59e0b);
   --pn-success: var(--theme-success-500, #22c55e);
-  --pn-badge-bg: var(--theme-success-500, #3b82f6);
 }
 
 .pn-panel {

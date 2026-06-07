@@ -42,6 +42,12 @@ describe('createNotificationsCollection', () => {
     })
   })
 
+  test('multi-tenant read denies when the user has no tenant value', () => {
+    const c = createNotificationsCollection(sanitizeConfig({ tenants: {} }))
+    const read = c.access!.read as Access
+    expect(read({ req: { user: { id: 'u1' } } } as any)).toBe(false)
+  })
+
   test('create is denied via REST; update/delete scope to recipient', () => {
     const c = createNotificationsCollection(sanitizeConfig({}))
     expect((c.access!.create as Access)({ req: { user: { id: 'u1' } } } as any)).toBe(false)

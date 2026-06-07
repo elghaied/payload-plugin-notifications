@@ -12,7 +12,7 @@ type Notification = {
   type?: 'info' | 'success' | 'warning'
 }
 
-export const NotificationBell = () => {
+export const NotificationBell = ({ slug = 'notifications' }: { slug?: string }) => {
   const { config } = useConfig()
   const apiRoute = config.routes.api
   const [items, setItems] = useState<Notification[]>([])
@@ -21,7 +21,7 @@ export const NotificationBell = () => {
 
   const fetchUnread = useCallback(async () => {
     const res = await fetch(
-      `${apiRoute}/notifications?where[read][equals]=false&sort=-createdAt&limit=20`,
+      `${apiRoute}/${slug}?where[read][equals]=false&sort=-createdAt&limit=20`,
       { credentials: 'include' },
     )
     if (!res.ok) {
@@ -29,11 +29,11 @@ export const NotificationBell = () => {
     }
     const data = await res.json()
     setItems(data.docs ?? [])
-  }, [apiRoute])
+  }, [apiRoute, slug])
 
   useEffect(() => {
     void fetchUnread()
-    const es = new EventSource(`${apiRoute}/notifications/stream`, { withCredentials: true })
+    const es = new EventSource(`${apiRoute}/${slug}/stream`, { withCredentials: true })
     es.onmessage = (e) => {
       try {
         const doc = JSON.parse(e.data) as Notification
@@ -47,10 +47,10 @@ export const NotificationBell = () => {
       // graceful degrade: rely on fetchUnread when the dropdown opens
     }
     return () => es.close()
-  }, [apiRoute, fetchUnread])
+  }, [apiRoute, slug, fetchUnread])
 
   const markRead = async (n: Notification) => {
-    await fetch(`${apiRoute}/notifications/${n.id}`, {
+    await fetch(`${apiRoute}/${slug}/${n.id}`, {
       body: JSON.stringify({ read: true }),
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
