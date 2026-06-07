@@ -1,7 +1,8 @@
 {
-  "name": "payload-plugin-notifications",
+  "name": "@elghaied/payload-plugin-notifications",
   "version": "1.0.0",
-  "description": "A blank template to get started with Payload 3.0",
+  "description": "In-dashboard notifications for the Payload admin, with a live SSE bell.",
+  "author": "elghaied",
   "license": "MIT",
   "type": "module",
   "exports": {

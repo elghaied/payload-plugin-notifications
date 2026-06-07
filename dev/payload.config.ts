@@ -1,8 +1,8 @@
+import { payloadPluginNotifications } from '@elghaied/payload-plugin-notifications'
 import { mongooseAdapter } from '@payloadcms/db-mongodb'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import path from 'path'
 import { buildConfig } from 'payload'
-import { payloadPluginNotifications } from 'payload-plugin-notifications'
 import sharp from 'sharp'
 import { fileURLToPath } from 'url'
 
