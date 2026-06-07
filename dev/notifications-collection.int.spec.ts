@@ -9,12 +9,25 @@ const fieldNames = (c: ReturnType<typeof createNotificationsCollection>) =>
   c.fields.map((f) => ('name' in f ? f.name : undefined)).filter(Boolean)
 
 describe('createNotificationsCollection', () => {
-  test('single-tenant: core fields present, no tenant field, hidden from nav', () => {
+  test('single-tenant: core fields present, no tenant field, visible in nav by default', () => {
     const c = createNotificationsCollection(sanitizeConfig({}))
     expect(c.slug).toBe('notifications')
     expect(fieldNames(c)).toEqual(['recipient', 'message', 'link', 'type', 'read'])
-    expect(c.admin?.hidden).toBe(true)
+    expect(c.admin?.hidden).toBe(false)
     expect(c.admin?.useAsTitle).toBe('message')
+  })
+
+  test('hideFromNav: true hides the collection from nav', () => {
+    const c = createNotificationsCollection(sanitizeConfig({ hideFromNav: true }))
+    expect(c.admin?.hidden).toBe(true)
+  })
+
+  test('message field uses the custom list cell (link to target, not edit)', () => {
+    const c = createNotificationsCollection(sanitizeConfig({}))
+    const message = c.fields.find((f) => 'name' in f && f.name === 'message') as any
+    expect(message.admin.components.Cell).toBe(
+      '@elghaied/payload-plugin-notifications/client#NotificationCell',
+    )
   })
 
   test('multi-tenant: adds a required tenant relationship field', () => {

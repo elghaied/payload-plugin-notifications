@@ -8,7 +8,11 @@ export interface TenantsConfig {
 export interface NotificationsPluginConfig {
   /** Installed but inert; schema stays stable. @default false */
   disabled?: boolean
-  /** Hide the notifications collection from the admin nav. @default true */
+  /**
+   * Hide the notifications collection from the admin nav. NOTE: Payload's `admin.hidden`
+   * also makes the collection's list/edit VIEWS unreachable (Not Found), so when this is
+   * true the bell's "See all notifications" link is hidden too. @default false
+   */
   hideFromNav?: boolean
   /** Slug for the notifications collection. @default 'notifications' */
   notificationsSlug?: string
@@ -33,7 +37,7 @@ export interface SanitizedConfig {
 
 export const sanitizeConfig = (opts: NotificationsPluginConfig = {}): SanitizedConfig => ({
   disabled: opts.disabled ?? false,
-  hideFromNav: opts.hideFromNav ?? true,
+  hideFromNav: opts.hideFromNav ?? false,
   notificationsSlug: opts.notificationsSlug ?? 'notifications',
   tenants: opts.tenants
     ? {

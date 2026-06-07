@@ -7,7 +7,7 @@ describe('sanitizeConfig', () => {
     const c = sanitizeConfig({})
     expect(c.notificationsSlug).toBe('notifications')
     expect(c.usersSlug).toBe('users')
-    expect(c.hideFromNav).toBe(true)
+    expect(c.hideFromNav).toBe(false)
     expect(c.tenants).toBeNull()
   })
 

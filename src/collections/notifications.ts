@@ -57,7 +57,18 @@ export const createNotificationsCollection = (config: SanitizedConfig): Collecti
         required: true,
       },
       ...tenantField,
-      { name: 'message', type: 'text', required: true },
+      {
+        name: 'message',
+        type: 'text',
+        admin: {
+          components: {
+            // Render the message as a link to the notification's `link` target in the list
+            // view, replacing Payload's default link-to-edit-view cell.
+            Cell: '@elghaied/payload-plugin-notifications/client#NotificationCell',
+          },
+        },
+        required: true,
+      },
       { name: 'link', type: 'text' },
       {
         name: 'type',

@@ -4,26 +4,73 @@
   --pn-border: var(--theme-elevation-150, #34343d);
   --pn-text: var(--theme-elevation-800, #e3e3e6);
   --pn-text-muted: var(--theme-elevation-500, #9a9aa6);
+  /* Bell icon color — elevation-800 is dark in light mode, light in dark mode, so the
+     inline SVG (fill: currentColor) keeps correct contrast against the header in both. */
+  --pn-icon: var(--theme-elevation-800, #e3e3e6);
+  --pn-link: var(--theme-success-500, #1587ba);
   --pn-info: var(--theme-text-info, #60a5fa);
   --pn-warning: var(--theme-warning-500, #f59e0b);
   --pn-success: var(--theme-success-500, #22c55e);
 }
 
+/* Bell trigger in the admin header */
+.pn-bell {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--pn-icon);
+}
+.pn-bell svg {
+  display: block;
+}
+
 .pn-panel {
   width: 340px;
   max-width: 90vw;
+  max-height: 70vh;
+  overflow-y: auto;
   background: var(--pn-bg);
   color: var(--pn-text);
   border: 1px solid var(--pn-border);
   border-radius: 8px;
-  overflow: hidden;
+}
+.pn-title {
+  padding: 10px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--pn-text-muted);
+  border-bottom: 1px solid var(--pn-border);
 }
 .pn-item { display: flex; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--pn-border); cursor: pointer; }
 .pn-item:hover { background: var(--pn-bg-hover); }
-.pn-item--read { opacity: 0.62; }
+.pn-item--read { opacity: 0.6; }
 .pn-dot { flex: none; width: 8px; height: 8px; border-radius: 50%; margin-top: 6px; }
 .pn-dot--info { background: var(--pn-info); }
 .pn-dot--warning { background: var(--pn-warning); }
 .pn-dot--success { background: var(--pn-success); }
-.pn-meta { font-size: 11px; color: var(--pn-text-muted); margin-top: 3px; }
+.pn-meta { font-size: 11px; color: var(--pn-text-muted); margin-top: 3px; word-break: break-all; }
 .pn-empty { padding: 14px; color: var(--pn-text-muted); font-size: 13px; }
+
+/* "See all notifications" footer — sticky so it stays visible while the list scrolls */
+.pn-seeall {
+  position: sticky;
+  bottom: 0;
+  display: block;
+  padding: 11px 14px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--pn-link);
+  text-decoration: none;
+  background: var(--pn-bg);
+  border-top: 1px solid var(--pn-border);
+}
+.pn-seeall:hover { background: var(--pn-bg-hover); }
+
+/* List-view message cell rendered as a link to the notification target (not the edit view) */
+.pn-cell-link { color: var(--pn-link); text-decoration: none; }
+.pn-cell-link:hover { text-decoration: underline; }
+.pn-cell-link--read { color: inherit; opacity: 0.7; }

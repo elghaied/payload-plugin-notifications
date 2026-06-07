@@ -46,7 +46,7 @@ export const payloadPluginNotifications =
       config.admin.components.actions = []
     }
     config.admin.components.actions.push({
-      clientProps: { slug: sanitized.notificationsSlug },
+      clientProps: { slug: sanitized.notificationsSlug, hideFromNav: sanitized.hideFromNav },
       path: '@elghaied/payload-plugin-notifications/client#NotificationBell',
     })
 

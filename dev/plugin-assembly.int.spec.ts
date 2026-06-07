@@ -20,14 +20,14 @@ describe('payloadPluginNotifications', () => {
     const actions = out.admin!.components!.actions as any[]
     const bell = actions.find((a) => typeof a === 'object' && String(a.path).includes('NotificationBell'))
     expect(bell).toBeDefined()
-    expect(bell.clientProps).toEqual({ slug: 'notifications' })
+    expect(bell.clientProps).toEqual({ slug: 'notifications', hideFromNav: false })
   })
 
-  test('bell clientProps reflect a custom notificationsSlug', () => {
-    const out = payloadPluginNotifications({ notificationsSlug: 'notes' })(base())
+  test('bell clientProps reflect a custom notificationsSlug + hideFromNav', () => {
+    const out = payloadPluginNotifications({ hideFromNav: true, notificationsSlug: 'notes' })(base())
     const actions = out.admin!.components!.actions as any[]
     const bell = actions.find((a) => typeof a === 'object' && String(a.path).includes('NotificationBell'))
-    expect(bell.clientProps).toEqual({ slug: 'notes' })
+    expect(bell.clientProps).toEqual({ slug: 'notes', hideFromNav: true })
   })
 
   test('disabled: keeps the collection (schema-stable) but adds no endpoint/hook/bell', () => {
