@@ -85,3 +85,27 @@
 .pn-row--list .pn-row__msg { font-size: 14px; }
 .pn-row__time { flex: none; font-size: 11px; color: var(--pn-text-muted); white-space: nowrap; }
 .pn-row--list .pn-row__time { font-size: 12px; }
+
+/* full list view */
+.pn-list { padding-top: 24px; padding-bottom: 24px; }
+.pn-list__header { font-size: 20px; font-weight: 600; margin: 0 0 16px; color: var(--pn-text); }
+.pn-list__rows {
+  border: 1px solid var(--pn-border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--pn-bg);
+}
+.pn-list__rows .pn-row:last-child { border-bottom: none; }
+.pn-pager { display: flex; gap: 6px; justify-content: center; margin-top: 16px; }
+.pn-pager__btn {
+  min-width: 30px;
+  padding: 4px 9px;
+  border: 1px solid var(--pn-border);
+  border-radius: 5px;
+  background: var(--pn-bg);
+  color: var(--pn-text);
+  font-size: 12px;
+  cursor: pointer;
+}
+.pn-pager__btn:hover { background: var(--pn-bg-hover); }
+.pn-pager__btn--active { background: var(--pn-accent); border-color: var(--pn-accent); color: #fff; }
