@@ -3,9 +3,14 @@
 In-dashboard notifications for the [Payload](https://payloadcms.com) admin, with a **live bell**
 that updates without a page refresh.
 
-- 🔔 A `NotificationBell` in the admin header — unread count + dropdown, mark-as-read, click-to-navigate.
+- 🔔 A `NotificationBell` in the admin header — unread count + dropdown feed with compact relative
+  timestamps ("now", "40m", "2d"); unread rows highlighted, read rows dimmed; click a row to mark
+  it read and go where it points.
+- 📋 A **custom notifications list view** — Payload's default table is replaced with a clean,
+  paginated feed (same row, whole-row click marks read + navigates). Reached via "See all".
 - ⚡ **Live** via Server-Sent Events (best-effort), with graceful degradation when SSE can't connect.
 - 🗄️ Every notification is a real DB row (the source of truth) — **adapter-agnostic** (Mongo or Postgres), opaque ids.
+- 🔒 Notification `link`s are scheme-validated before navigation (no `javascript:`/`data:` XSS).
 - 🧩 Additive and **default-off**; **optional** multi-tenant scoping.
 
 ## How it works
