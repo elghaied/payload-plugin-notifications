@@ -102,6 +102,13 @@ CPU-spinning orphan. Set `DATABASE_URI` to point at a real Mongo instead.
 
 <!-- Grows via WORKFLOW Phase 4: collections, hooks, services, config options, plugin hooks. -->
 
+- **SSE transport: Approach A (Payload collection endpoint).** Phase-0 spike (2026-06-07)
+  confirmed a Payload endpoint returning a `text/event-stream` `Response` flushes
+  **incrementally** (ticks ~1s apart under `curl -N`, not buffered) and that **`req.signal`
+  abort + ReadableStream `cancel()` both fire on client disconnect**. So the live stream is a
+  `/stream` collection endpoint at `/api/<notificationsSlug>/stream`; no hand-written Next.js
+  route needed. (Approach B — exported Next.js route — remains the documented fallback, unused.)
+
 ## Configuration
 
 <!-- Grows: document each plugin config option as it lands. -->
