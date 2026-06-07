@@ -524,7 +524,9 @@ export const createNotificationsCollection = (config: SanitizedConfig): Collecti
 }
 ```
 
-> Note: the multi-tenant test expects fields `['recipient', 'message', 'link', 'type', 'read']` in single-tenant mode and a `tenant` field inserted after `recipient` in multi-tenant mode. The implementation places `tenant` directly after `recipient` to match. The tenant value is read off `req.user[tenantFieldName]`; installers using `@payloadcms/plugin-multi-tenant` expose the user's tenant there.
+> Note: the multi-tenant test expects fields `['recipient', 'message', 'link', 'type', 'read']` in single-tenant mode and a `tenant` field inserted after `recipient` in multi-tenant mode. The implementation places `tenant` directly after `recipient` to match.
+>
+> **Reviewed caveat — multi-tenant user shape:** the read filter reads a single `req.user[tenantFieldName]`, i.e. it assumes a **one-tenant-per-user** model. The official `@payloadcms/plugin-multi-tenant` instead models users with a `tenants` *array* (multiple memberships). For those installs the simple `{ [tenantField]: { equals: user[tenantField] } }` filter won't be correct. v1 ships the simple model (documented); if you need the array model, the clean extension is an optional `tenantFilter?: (req) => Where` config hook that overrides the default filter. Add that option only if a real install needs it (YAGNI for v1) — but call it out in the README's multi-tenant section.
 
 - [ ] **Step 4: Run it — expect PASS.**
 
@@ -718,16 +720,24 @@ export const createStreamEndpoint = (registry: NotificationRegistry): Endpoint =
     }
     const userId = String(user.id)
     const encoder = new TextEncoder()
+    let streamController: ReadableStreamDefaultController | undefined
     let onAbort: (() => void) | undefined
+
+    // Single cleanup using the CAPTURED controller reference (not `this`).
+    const cleanup = () => {
+      if (streamController) registry.unregister(userId, streamController)
+      if (onAbort) req.signal?.removeEventListener('abort', onAbort)
+    }
 
     const stream = new ReadableStream({
       start(controller) {
+        streamController = controller
         registry.register(userId, controller)
         // initial comment to open the stream and defeat proxy buffering
         controller.enqueue(encoder.encode(': connected\n\n'))
 
         onAbort = () => {
-          registry.unregister(userId, controller)
+          cleanup()
           try {
             controller.close()
           } catch {
@@ -737,8 +747,7 @@ export const createStreamEndpoint = (registry: NotificationRegistry): Endpoint =
         req.signal?.addEventListener('abort', onAbort)
       },
       cancel() {
-        registry.unregister(userId, this as never)
-        if (onAbort) req.signal?.removeEventListener('abort', onAbort)
+        cleanup()
       },
     })
 
@@ -754,7 +763,7 @@ export const createStreamEndpoint = (registry: NotificationRegistry): Endpoint =
 })
 ```
 
-> Note on `cancel()`: it unregisters defensively. The authoritative cleanup is the `abort` listener, which has the exact `controller` reference. The test asserts `unregister(userId, ...)` is called on abort.
+> **Cleanup design (reviewed):** `cancel()` is the *primary, reliable* cleanup — it fires whenever the Response stream is torn down (consumer disconnect), on every platform. The `req.signal` abort listener is *secondary* and may be absent on `PayloadRequest` (the Phase-0 spike Step 4 confirms which fires); both route through `cleanup()`, which unregisters the **closure-captured `controller`** — not `this`, which is NOT the controller inside the source object. The Task-5 test asserts `unregister(userId, <controller>)` is called on abort.
 >
 > **If the Phase-0 spike chose Approach B:** also export `createStreamRoute(getConfig)` here returning a Next.js `GET` handler that calls `payload.auth({ headers: req.headers })`, returns the same `Response` immediately, and the dev app mounts it at `dev/app/(payload)/api/notifications/stream/route.ts` with `export const runtime = 'nodejs'`. Keep `createStreamEndpoint` too; the plugin (Task 6) wires whichever the spike picked.
 
@@ -1169,7 +1178,7 @@ describe('client exports', () => {
 Run: `pnpm test:int -- bell-exports`
 Expected: FAIL — `NotificationBell` not exported.
 
-- [ ] **Step 4: Implement `src/components/NotificationBell.tsx`** (verify `@payloadcms/ui` import names against the installed version first):
+- [ ] **Step 4: Implement `src/components/NotificationBell.tsx`.** Imports **confirmed against `@payloadcms/ui@3.84.1`**: `Popup`, `Pill`, `toast`, `useConfig` all export from `@payloadcms/ui`. `Popup` takes `button` (trigger node) + `render={({ close }) => …}` (content, **rendered in a portal** — hence the `:root` theme-var rule). `toast` is re-exported from **sonner**, so `toast.info(message)` is valid and the admin already mounts the Toaster (no `<Toaster />` needed):
 
 ```tsx
 'use client'
@@ -1262,7 +1271,7 @@ export const NotificationBell = () => {
 }
 ```
 
-> The exact `Popup` prop API (`button`/`render` vs children) and `Pill`/`toast` signatures MUST be confirmed against the installed `@payloadcms/ui@3.84.1` — adjust the JSX to the real API; the structure (icon + Pill badge, panel list, click→markRead→navigate, toast on live arrival) is the contract.
+> Prop API confirmed against `@payloadcms/ui@3.84.1` (`Popup.button` + `Popup.render`, `showScrollbar`). Keep the contract intact: icon + Pill badge, panel list, click→markRead→navigate, toast on live arrival. If `Pill`'s child/label prop differs at runtime, adjust the badge JSX only.
 
 - [ ] **Step 5: Export it** — `src/exports/client.ts`:
 
@@ -1370,6 +1379,16 @@ git commit -m "docs: README, CLAUDE.md architecture, and changeset for notificat
 
 **Spec coverage:** §2 architecture → Tasks 3–7; §3 collection → Task 3; §4 access → Tasks 3, 8; §5 pushNotification → Task 6; §6 SSE transport → Task 0 (decision) + Task 5; §7 registry → Task 2; §8 UI + theme → Task 9; §9 config → Task 1; §10 file layout → File Structure; §11 phases/gates → Phase 0/2/3/4 + per-task gates; §13 acceptance criteria → AC1 Task 7, AC2 Task 8, AC3 Tasks 5/6/9, AC4 Task 9, AC5 Task 9 visual gate, AC6 Task 10/11. No gaps.
 
-**Placeholder scan:** no TBD/TODO; every code step shows complete code. The two deliberate deferrals — `@payloadcms/ui` exact import names (Task 9) and the Approach-B branch (Task 0/5) — are explicit "verify against installed version / apply if spike chose B" instructions, not missing content.
+**Placeholder scan:** no TBD/TODO; every code step shows complete code. The one remaining deliberate deferral — the Approach-B branch (Task 0/5) — is gated on the Phase-0 spike. (`@payloadcms/ui` imports, the global `admin.components.actions` slot, and the auto-injected `users` collection were all *verified* during plan review — see the Plan Review note below.)
+
+## Plan Review (payload-skill verification, 2026-06-07)
+
+Reviewed the plan's Payload-specific claims against the `payload` skill, the Payload v3.84.0 docs (context7), the installed packages, and the live harness:
+
+- ✅ **`admin.components.actions` is a valid root-level slot** rendering components in the Admin Panel header (v3.84.0 `root-components` docs). Bell mounting correct.
+- ✅ **`users` collection is auto-injected** by Payload 3.84 (probed the booted dev config: `users` present alongside `payload-kv`/`payload-locked-documents`/`payload-preferences`/`payload-migrations`). Tasks 6 & 8 are safe.
+- ✅ **`@payloadcms/ui@3.84.1` exports `Popup`, `Pill`, `toast` (from sonner), `useConfig`.** `Popup` uses `button` + `render({ close })`; content renders in a portal (validates the `:root` theme-var rule). `toast.info()` valid.
+- 🐛 **Fixed:** Task 5 `cancel()` referenced `this` instead of the registered controller → connection leak on disconnect. Now uses a closure-captured `controller` via a shared `cleanup()`.
+- ⚠️ **Flagged:** multi-tenant read filter assumes one-tenant-per-user (see Task 3 caveat); the official multi-tenant plugin uses a `tenants` array. Documented; optional `tenantFilter` hook is the future extension.
 
 **Type consistency:** `SanitizedConfig`/`sanitizeConfig` (Task 1) consumed by Tasks 3, 7. `NotificationRegistry` (Task 2) consumed by Tasks 4, 5, 7. `createNotificationsCollection`/`createFanoutHook`/`createStreamEndpoint`/`pushNotification`/`notificationRegistry` names are identical across definition and use. Component path string `@elghaied/payload-plugin-notifications/client#NotificationBell` matches the renamed package (Task 1) and the export (Task 9).
