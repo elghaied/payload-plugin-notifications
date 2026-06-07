@@ -12,10 +12,14 @@ it loads into context every session, so bloat costs you.
 
 <!-- One paragraph: what the plugin does, which collections/hooks/endpoints/components it adds. -->
 
-A Payload CMS 3.x plugin that adds **in-app notifications** for admin users: a `notifications`
-collection plus admin UI (a bell/indicator with an unread count and a dropdown/list of
-notifications, mark-as-read). Exact collection shape, delivery triggers, access model, and UI
-surface are being refined in brainstorming — this paragraph will be tightened once the spec lands.
+`@elghaied/payload-plugin-notifications` — in-dashboard notifications for the Payload admin with
+a **live SSE bell**. Two decoupled layers: the **source of truth** is a `notifications` collection
+row (adapter-agnostic, opaque ids); the **live channel** is a best-effort Server-Sent-Events push
+to open admin tabs, triggered as a side effect of the DB write by a single `afterChange` fan-out
+hook. Adds: the `notifications` collection (recipient-scoped access, hidden from nav), a `/stream`
+collection endpoint, the fan-out hook, a `pushNotification()` write API, and a `NotificationBell`
+client component injected into `admin.components.actions`. Additive and **default-off** via
+`disabled`; multi-tenant is **optional** via the `tenants` config.
 
 ---
 
@@ -100,7 +104,19 @@ CPU-spinning orphan. Set `DATABASE_URI` to point at a real Mongo instead.
 
 ## Architecture
 
-<!-- Grows via WORKFLOW Phase 4: collections, hooks, services, config options, plugin hooks. -->
+Two decoupled layers; the live push is always a side effect of the DB write, never a separate path.
+
+| File | Responsibility |
+|---|---|
+| `src/index.ts` | Plugin entry `payloadPluginNotifications(opts)(config)`. Adds the collection (always, schema-stable); wires the `/stream` endpoint + fan-out hook + bell only when not `disabled`. |
+| `src/types.ts` | `NotificationsPluginConfig` + `sanitizeConfig()` → `SanitizedConfig`; `NOTIFICATION_TYPES`. |
+| `src/collections/notifications.ts` | `createNotificationsCollection(sanitized)`. Fields: `recipient`, (optional `tenant`), `message`, `link`, `type`, `read`. Access: read = recipient-scoped (+ tenant AND when multi-tenant); create = `false` (system-only); update/delete = own rows. Hidden from nav by default. |
+| `src/registry/index.ts` | `NotificationRegistry` interface + `InMemoryRegistry` + `notificationRegistry` singleton. `Map<userId, Set<controller>>`. Distributed impl (PG LISTEN/NOTIFY / Mongo change streams) is a documented future swap, not built. |
+| `src/hooks/fanout.ts` | `createFanoutHook(registry)` — `afterChange`; on `create`, `registry.emitToUser(recipientId, doc)`. Best-effort (never throws into the write path). |
+| `src/endpoints/stream.ts` | `createStreamEndpoint(registry)` → `/api/<slug>/stream`. 401 if no `req.user`; else streaming `text/event-stream` Response; registers the closure-captured controller; cleanup via `cancel()` + `req.signal` abort. |
+| `src/pushNotification.ts` | `pushNotification(payload, { recipient, message, link?, type?, tenant?, req? })` → `payload.create(..., overrideAccess: true)`. The single seam where `payload.jobs.queue()` would swap in later. Pass `req` inside a hook to join its transaction. |
+| `src/components/NotificationBell.tsx` | `'use client'` bell in `admin.components.actions`. Mount → REST fetch unread → open `EventSource('/api/<slug>/stream')`; prepend + `toast.info` on message; re-fetch on dropdown open (graceful degrade). Built on `@payloadcms/ui` `Popup`/`Pill`/`toast`(sonner). |
+| `src/theme/notifications.css` | The single theme-indirection file. Maps Payload `--theme-*` tokens to `--pn-*` at **`:root`** so the portal-rendered `Popup` (mounted at `<body>`) can read them. Verified rendered in a real browser. |
 
 - **SSE transport: Approach A (Payload collection endpoint).** Phase-0 spike (2026-06-07)
   confirmed a Payload endpoint returning a `text/event-stream` `Response` flushes
@@ -108,7 +124,34 @@ CPU-spinning orphan. Set `DATABASE_URI` to point at a real Mongo instead.
   abort + ReadableStream `cancel()` both fire on client disconnect**. So the live stream is a
   `/stream` collection endpoint at `/api/<notificationsSlug>/stream`; no hand-written Next.js
   route needed. (Approach B — exported Next.js route — remains the documented fallback, unused.)
+- **`users` is auto-injected** by Payload (no explicit auth collection needed in the dev harness).
+- **Tests:** all in `dev/*.int.spec.ts`. Pure-logic tests (types, registry, collection factory,
+  fanout, stream endpoint, plugin assembly) need no DB; integration tests (`pushNotification`,
+  `access-isolation`) boot the in-memory Mongo. `vitest.config.js` stubs `.css` imports so the
+  `@payloadcms/ui` component chain loads under the node test env.
 
 ## Configuration
 
-<!-- Grows: document each plugin config option as it lands. -->
+```ts
+payloadPluginNotifications({
+  disabled?: boolean,          // default false — installed but inert; schema stays stable
+  notificationsSlug?: string,  // default 'notifications'
+  usersSlug?: string,          // default 'users' — the auth collection notifications target
+  tenants?: {                  // OMIT for single-tenant (recipient-only scoping)
+    tenantsSlug?: string,      // default 'tenants'
+    tenantFieldName?: string,  // default 'tenant'
+  },
+  hideFromNav?: boolean,       // default true — the bell is the UI surface
+})
+```
+
+**Multi-tenant caveat:** the read filter reads a single `req.user[tenantFieldName]` (one-tenant-per-user).
+The official `@payloadcms/plugin-multi-tenant` models users with a `tenants` *array*; for that, a
+future optional `tenantFilter?: (req) => Where` override is the clean extension (not built in v1).
+
+**Send a notification (server-side):**
+```ts
+import { pushNotification } from '@elghaied/payload-plugin-notifications'
+await pushNotification(payload, { recipient: userId, message: 'Invoice paid', link: '/admin/...', type: 'success' })
+// inside a hook: pass req so the create joins the transaction
+```
