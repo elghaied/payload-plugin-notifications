@@ -2,17 +2,14 @@
 import { Pill, Popup, toast, useConfig } from '@payloadcms/ui'
 import { useCallback, useEffect, useState } from 'react'
 
+import type { NotificationItem } from './NotificationRow.js'
+
+import { useMinuteTick } from '../hooks/useMinuteTick.js'
+import { markNotificationRead } from '../utilities/markNotificationRead.js'
 import { safeHref } from '../utilities/safeHref.js'
 import { BellIcon } from './BellIcon.js'
+import { NotificationRow } from './NotificationRow.js'
 import './../theme/notifications.css'
-
-type Notification = {
-  id: string
-  link?: string
-  message: string
-  read?: boolean
-  type?: 'info' | 'success' | 'warning'
-}
 
 export const NotificationBell = ({
   slug = 'notifications',
@@ -24,11 +21,10 @@ export const NotificationBell = ({
   const { config } = useConfig()
   const apiRoute = config.routes.api
   const adminRoute = config.routes.admin
-  const [items, setItems] = useState<Notification[]>([])
+  const nowMs = useMinuteTick()
+  const [items, setItems] = useState<NotificationItem[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
 
-  // Load the recent notifications (read AND unread, so opened ones stay visible) for the
-  // dropdown, plus an authoritative unread count for the badge (not capped by the list limit).
   const refresh = useCallback(async () => {
     const listRes = await fetch(`${apiRoute}/${slug}?depth=0&limit=20&sort=-createdAt`, {
       credentials: 'include',
@@ -51,7 +47,7 @@ export const NotificationBell = ({
     const es = new EventSource(`${apiRoute}/${slug}/stream`, { withCredentials: true })
     es.onmessage = (e) => {
       try {
-        const doc = JSON.parse(e.data) as Notification
+        const doc = JSON.parse(e.data) as NotificationItem
         setItems((prev) => [doc, ...prev].slice(0, 20))
         setUnreadCount((c) => c + 1)
         toast.info(doc.message)
@@ -60,28 +56,25 @@ export const NotificationBell = ({
       }
     }
     es.onerror = () => {
-      // graceful degrade: rely on refresh() when the dropdown opens
+      // graceful degrade
     }
     return () => es.close()
   }, [apiRoute, slug, refresh])
 
-  const markRead = async (n: Notification) => {
-    if (!n.read) {
-      await fetch(`${apiRoute}/${slug}/${n.id}`, {
-        body: JSON.stringify({ read: true }),
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        method: 'PATCH',
-      })
-      // Keep the item in the list (just mark it read) — recent history stays visible.
-      setItems((prev) => prev.map((x) => (x.id === n.id ? { ...x, read: true } : x)))
-      setUnreadCount((c) => Math.max(0, c - 1))
-    }
-    const href = safeHref(n.link)
-    if (href) {
-      window.location.href = href
-    }
-  }
+  const activate = useCallback(
+    async (n: NotificationItem) => {
+      if (!n.read) {
+        await markNotificationRead(apiRoute, slug, n.id)
+        setItems((prev) => prev.map((x) => (x.id === n.id ? { ...x, read: true } : x)))
+        setUnreadCount((c) => Math.max(0, c - 1))
+      }
+      const href = safeHref(n.link)
+      if (href) {
+        window.location.href = href
+      }
+    },
+    [apiRoute, slug],
+  )
 
   return (
     <Popup
@@ -101,24 +94,7 @@ export const NotificationBell = ({
           <div className="pn-title">Notifications</div>
           {items.length === 0 && <div className="pn-empty">No notifications</div>}
           {items.map((n) => (
-            <div
-              className={`pn-item${n.read ? ' pn-item--read' : ''}`}
-              key={n.id}
-              onClick={() => void markRead(n)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  void markRead(n)
-                }
-              }}
-              role="menuitem"
-              tabIndex={0}
-            >
-              <span className={`pn-dot pn-dot--${n.type ?? 'info'}`} />
-              <div style={{ flex: 1 }}>
-                <div>{n.message}</div>
-                {n.link && <div className="pn-meta">{n.link}</div>}
-              </div>
-            </div>
+            <NotificationRow key={n.id} notification={n} nowMs={nowMs} onActivate={activate} size="dropdown" />
           ))}
           {!hideFromNav && (
             <a className="pn-seeall" href={`${adminRoute}/collections/${slug}`}>
