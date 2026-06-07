@@ -25,7 +25,8 @@ export const formatRelative = (date: string | undefined, nowMs: number): Relativ
   if (diff < 45 * S) {
     label = 'now'
   } else if (diff < H) {
-    label = `${Math.floor(diff / MIN)}m`
+    // Clamp to >= 1m: between the 45s "now" cutoff and 60s, floor(diff/MIN) is 0 — never show "0m".
+    label = `${Math.max(1, Math.floor(diff / MIN))}m`
   } else if (diff < D) {
     label = `${Math.floor(diff / H)}h`
   } else if (diff < W) {

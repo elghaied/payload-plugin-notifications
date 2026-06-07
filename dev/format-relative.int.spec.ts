@@ -12,6 +12,10 @@ describe('formatRelative', () => {
     expect(formatRelative(ago(10 * S), now).label).toBe('now')
     expect(formatRelative(ago(44 * S), now).label).toBe('now')
   })
+  test('45-59s clamps to "1m" (never "0m")', () => {
+    expect(formatRelative(ago(45 * S), now).label).toBe('1m')
+    expect(formatRelative(ago(59 * S), now).label).toBe('1m')
+  })
   test('minutes', () => {
     expect(formatRelative(ago(60 * S), now).label).toBe('1m')
     expect(formatRelative(ago(40 * M), now).label).toBe('40m')
