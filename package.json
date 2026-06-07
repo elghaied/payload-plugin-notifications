@@ -4,6 +4,31 @@
   "description": "In-dashboard notifications for the Payload admin, with a live SSE bell.",
   "author": "elghaied",
   "license": "MIT",
+  "homepage": "https://github.com/elghaied/payload-plugin-notifications#readme",
+  "bugs": {
+    "url": "https://github.com/elghaied/payload-plugin-notifications/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/elghaied/payload-plugin-notifications.git"
+  },
+  "keywords": [
+    "payload",
+    "payloadcms",
+    "payload-plugin",
+    "plugin",
+    "notifications",
+    "in-app-notifications",
+    "notification-bell",
+    "sse",
+    "server-sent-events",
+    "realtime",
+    "admin",
+    "dashboard",
+    "i18n",
+    "multi-tenant",
+    "typescript"
+  ],
   "type": "module",
   "exports": {
     ".": {
