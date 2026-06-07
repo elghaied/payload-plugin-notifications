@@ -15,6 +15,7 @@ that updates without a page refresh.
 - ⚡ **Live** via Server-Sent Events (best-effort), with graceful degradation when SSE can't connect.
 - 🗄️ Every notification is a real DB row (the source of truth) — **adapter-agnostic** (Mongo or Postgres), opaque ids.
 - 🔒 Notification `link`s are scheme-validated before navigation (no `javascript:`/`data:` XSS).
+- 🌍 **Translated** UI strings, field labels, and collection labels — ships 12 languages (`ar`, `de`, `en`, `es`, `fr`, `hi`, `id`, `it`, `pl`, `ru`, `tr`, `zh`), RTL-aware; user translations override.
 - 🧩 Additive and **default-off**; **optional** multi-tenant scoping.
 
 ## Screenshots
