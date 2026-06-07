@@ -1,20 +1,59 @@
-import type { Config } from 'payload'
+import type { Config, Plugin } from 'payload'
 
-export type PayloadPluginNotificationsConfig = {
-  /**
-   * Set to true to keep the plugin installed but inert (schema stays stable).
-   */
-  disabled?: boolean
-}
+import type { NotificationsPluginConfig } from './types.js'
+
+import { createNotificationsCollection } from './collections/notifications.js'
+import { createStreamEndpoint } from './endpoints/stream.js'
+import { createFanoutHook } from './hooks/fanout.js'
+import { notificationRegistry } from './registry/index.js'
+import { sanitizeConfig } from './types.js'
 
 export const payloadPluginNotifications =
-  (pluginOptions: PayloadPluginNotificationsConfig = {}) =>
+  (pluginOptions: NotificationsPluginConfig = {}): Plugin =>
   (config: Config): Config => {
-    if (pluginOptions.disabled) {
+    const sanitized = sanitizeConfig(pluginOptions)
+
+    const collection = createNotificationsCollection(sanitized)
+
+    if (!config.collections) {
+      config.collections = []
+    }
+
+    if (!sanitized.disabled) {
+      collection.endpoints = [
+        ...(collection.endpoints || []),
+        createStreamEndpoint(notificationRegistry),
+      ]
+      collection.hooks = {
+        ...collection.hooks,
+        afterChange: [createFanoutHook(notificationRegistry), ...(collection.hooks?.afterChange || [])],
+      }
+    }
+
+    config.collections.push(collection)
+
+    if (sanitized.disabled) {
       return config
     }
 
-    // Build your plugin here: add collections, fields, hooks, endpoints, components.
+    if (!config.admin) {
+      config.admin = {}
+    }
+    if (!config.admin.components) {
+      config.admin.components = {}
+    }
+    if (!config.admin.components.actions) {
+      config.admin.components.actions = []
+    }
+    config.admin.components.actions.push(
+      '@elghaied/payload-plugin-notifications/client#NotificationBell',
+    )
 
     return config
   }
+
+export { pushNotification } from './pushNotification.js'
+export type { PushNotificationArgs } from './pushNotification.js'
+export { notificationRegistry } from './registry/index.js'
+export type { NotificationRegistry } from './registry/index.js'
+export type { NotificationsPluginConfig, NotificationType, TenantsConfig } from './types.js'
