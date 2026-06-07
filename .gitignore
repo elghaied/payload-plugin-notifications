@@ -51,3 +51,7 @@ next-env.d.ts
 
 # Visual brainstorming companion
 .superpowers/
+
+# Local investigation scratch notes
+CPU-ORPHAN-FINDINGS.md
+/screens/

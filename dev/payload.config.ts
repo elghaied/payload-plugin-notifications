@@ -6,6 +6,7 @@ import { buildConfig } from 'payload'
 import sharp from 'sharp'
 import { fileURLToPath } from 'url'
 
+import { Posts } from './collections/Posts.js'
 import { testEmailAdapter } from './helpers/testEmailAdapter.js'
 import { seed } from './seed.js'
 
@@ -55,7 +56,7 @@ const buildConfigWithDB = async () => {
         baseDir: path.resolve(dirname),
       },
     },
-    collections: [],
+    collections: [Posts],
     db: mongooseAdapter({
       connectOptions: { serverSelectionTimeoutMS: 2000 },
       ensureIndexes: true,
