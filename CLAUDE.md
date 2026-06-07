@@ -100,6 +100,18 @@ so one-shot CLI commands (`generate:types`, `generate:importmap`) never spawn an
 mongod that pins the CPU. Those run through `dev/payload-cli.mjs`, which reaps the CLI's
 CPU-spinning orphan. Set `DATABASE_URI` to point at a real Mongo instead.
 
+**CPU-orphan trap (fixed — do not regress):** Payload fire-and-forgets a `generate:types` /
+`generate:importmap` **child process on every non-production init** (`getPayload`), and that child
+inherits the parent's env — so under `pnpm test:int` each `getPayload` spawns a `generate:types`
+that inherits `VITEST=true`, boots its OWN memory replset, spins, and is never reaped (it reparents
+to init). Dozens of test runs ⇒ dozens of CPU-pinning orphans. Two guards prevent this, both in
+`dev/payload.config.ts`: (1) `typescript.autoGenerate: false` + `admin.importMap.autoGenerate:
+false` stop the on-init fire-and-forget entirely (regen explicitly via `pnpm dev:generate-types`);
+(2) `wantsMemoryDB` excludes `generate:*` argv so a generate CLI never boots the memory DB even
+with `VITEST` inherited. A tighter `NODE_ENV==='test' && VITEST` gate would NOT fix it — the
+orphan children carry both flags. If `test:int` ever slows down or `ps | grep "bin.js
+generate:types"` shows lingering procs, these guards regressed.
+
 ---
 
 ## Architecture

@@ -26,7 +26,17 @@ if (!process.env.ROOT_DIR) {
 //   Those commands don't need a DB and fail fast via serverSelectionTimeoutMS if none is up.
 const buildConfigWithDB = async () => {
   const externalURI = process.env.DATABASE_URI || process.env.DATABASE_URL
-  const wantsMemoryDB = Boolean(process.env.VITEST || process.env.PAYLOAD_MEMORY_DB)
+  // Payload fire-and-forgets `generate:types` / `generate:importmap` child processes on every
+  // non-production init (see payload/dist/index.js — `void this.bin({ args: ['generate:types'] })`).
+  // Those children INHERIT this process's env, so a plain `VITEST`/`PAYLOAD_MEMORY_DB` gate makes
+  // each one boot its own in-memory replset and spin forever (they reparent to init, unreaped).
+  // The actual test runner / app process owns the DB lifecycle — a generate:* CLI never does — so
+  // exclude generate:* invocations from spinning up the memory DB regardless of inherited flags.
+  const isGenerateCli = process.argv.some(
+    (a) => a === 'generate:types' || a === 'generate:importmap',
+  )
+  const wantsMemoryDB =
+    !isGenerateCli && Boolean(process.env.VITEST || process.env.PAYLOAD_MEMORY_DB)
   let url = externalURI || ''
 
   if (!externalURI && wantsMemoryDB) {
@@ -40,6 +50,8 @@ const buildConfigWithDB = async () => {
   return buildConfig({
     admin: {
       importMap: {
+        // Don't auto-spawn `generate:importmap` on every init — we regen explicitly via the CLI.
+        autoGenerate: false,
         baseDir: path.resolve(dirname),
       },
     },
@@ -58,6 +70,9 @@ const buildConfigWithDB = async () => {
     secret: process.env.PAYLOAD_SECRET || 'test-secret_key',
     sharp,
     typescript: {
+      // Don't fire-and-forget a `generate:types` child on every init (the orphan-spawn source).
+      // Regen explicitly via `pnpm dev:generate-types` (routed through the reaping CLI wrapper).
+      autoGenerate: false,
       outputFile: path.resolve(dirname, 'payload-types.ts'),
     },
   })
