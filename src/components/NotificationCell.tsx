@@ -1,6 +1,7 @@
 'use client'
 import * as React from 'react'
 
+import { safeHref } from '../utilities/safeHref.js'
 import './../theme/notifications.css'
 
 type CellProps = {
@@ -17,7 +18,7 @@ type CellProps = {
 export const NotificationCell = (props: CellProps) => {
   const { cellData, rowData } = props
   const text = typeof cellData === 'string' ? cellData : String(cellData ?? '')
-  const href = rowData?.link
+  const href = safeHref(rowData?.link) // reject javascript:/data: etc. (XSS)
 
   if (!href) {
     return <span>{text}</span>

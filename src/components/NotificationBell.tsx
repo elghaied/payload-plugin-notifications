@@ -2,6 +2,7 @@
 import { Pill, Popup, toast, useConfig } from '@payloadcms/ui'
 import { useCallback, useEffect, useState } from 'react'
 
+import { safeHref } from '../utilities/safeHref.js'
 import { BellIcon } from './BellIcon.js'
 import './../theme/notifications.css'
 
@@ -76,8 +77,9 @@ export const NotificationBell = ({
       setItems((prev) => prev.map((x) => (x.id === n.id ? { ...x, read: true } : x)))
       setUnreadCount((c) => Math.max(0, c - 1))
     }
-    if (n.link) {
-      window.location.href = n.link
+    const href = safeHref(n.link)
+    if (href) {
+      window.location.href = href
     }
   }
 
