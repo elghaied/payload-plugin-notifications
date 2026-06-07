@@ -70,15 +70,15 @@
   gap: 10px;
   cursor: pointer;
   border-bottom: 1px solid var(--pn-border);
-  border-left: 3px solid transparent;
+  border-inline-start: 3px solid transparent;
   color: var(--pn-text);
   outline: none;
 }
 .pn-row:hover { background: var(--pn-bg-hover); }
 .pn-row:focus-visible { box-shadow: inset 0 0 0 2px var(--pn-accent); }
-.pn-row--dropdown { padding: 12px 14px 12px 11px; }
-.pn-row--list { padding: 14px 16px 14px 13px; }
-.pn-row--unread { border-left-color: var(--pn-accent); }
+.pn-row--dropdown { padding-block: 12px; padding-inline: 11px 14px; }
+.pn-row--list { padding-block: 14px; padding-inline: 13px 16px; }
+.pn-row--unread { border-inline-start-color: var(--pn-accent); }
 .pn-row--unread .pn-row__msg { font-weight: 600; }
 .pn-row--read { opacity: 0.55; }
 .pn-row__msg { flex: 1; min-width: 0; font-size: 13px; line-height: 1.35; overflow-wrap: anywhere; }

@@ -1,7 +1,8 @@
 'use client'
-import { Gutter, useConfig } from '@payloadcms/ui'
+import { Gutter, useConfig, useTranslation } from '@payloadcms/ui'
 import { useCallback, useEffect, useState } from 'react'
 
+import type { PluginNotificationsTranslationKeys, PluginNotificationsTranslations } from '../translations/index.js'
 import type { NotificationItem } from './NotificationRow.js'
 
 import { useMinuteTick } from '../hooks/useMinuteTick.js'
@@ -14,6 +15,7 @@ const PAGE_SIZE = 25
 
 export const NotificationsListView = ({ slug = 'notifications' }: { slug?: string }) => {
   const { config } = useConfig()
+  const { t } = useTranslation<PluginNotificationsTranslations, PluginNotificationsTranslationKeys>()
   const apiRoute = config.routes.api
   const nowMs = useMinuteTick()
   const [items, setItems] = useState<NotificationItem[]>([])
@@ -59,16 +61,16 @@ export const NotificationsListView = ({ slug = 'notifications' }: { slug?: strin
 
   return (
     <Gutter className="pn-list">
-      <h1 className="pn-list__header">Notifications</h1>
-      {loading && items.length === 0 && <div className="pn-empty">Loading…</div>}
-      {!loading && items.length === 0 && <div className="pn-empty">No notifications</div>}
+      <h1 className="pn-list__header">{t('plugin-notifications:plural')}</h1>
+      {loading && items.length === 0 && <div className="pn-empty">{t('plugin-notifications:loading')}</div>}
+      {!loading && items.length === 0 && <div className="pn-empty">{t('plugin-notifications:empty')}</div>}
       <div className="pn-list__rows">
         {items.map((n) => (
           <NotificationRow key={n.id} notification={n} nowMs={nowMs} onActivate={activate} size="list" />
         ))}
       </div>
       {totalPages > 1 && (
-        <nav aria-label="Pagination" className="pn-pager">
+        <nav aria-label={t('plugin-notifications:paginationLabel')} className="pn-pager">
           {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
             <button
               aria-current={p === page ? 'page' : undefined}

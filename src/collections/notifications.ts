@@ -29,6 +29,7 @@ export const createNotificationsCollection = (config: SanitizedConfig): Collecti
           name: tenants.tenantFieldName,
           type: 'relationship',
           index: true,
+          label: ({ t }) => (t as unknown as (k: string) => string)('plugin-notifications:tenant'),
           relationTo: tenants.tenantsSlug,
           required: true,
         },
@@ -63,20 +64,47 @@ export const createNotificationsCollection = (config: SanitizedConfig): Collecti
         name: 'recipient',
         type: 'relationship',
         index: true,
+        label: ({ t }) => (t as unknown as (k: string) => string)('plugin-notifications:recipient'),
         relationTo: usersSlug,
         required: true,
       },
       ...tenantField,
-      { name: 'message', type: 'text', required: true },
-      { name: 'link', type: 'text' },
+      {
+        name: 'message',
+        type: 'text',
+        label: ({ t }) => (t as unknown as (k: string) => string)('plugin-notifications:message'),
+        required: true,
+      },
+      {
+        name: 'link',
+        type: 'text',
+        label: ({ t }) => (t as unknown as (k: string) => string)('plugin-notifications:link'),
+      },
       {
         name: 'type',
         type: 'select',
         defaultValue: 'info',
-        options: NOTIFICATION_TYPES.map((value) => ({ label: value, value })),
+        label: ({ t }) => (t as unknown as (k: string) => string)('plugin-notifications:type'),
+        options: NOTIFICATION_TYPES.map((value) => ({
+          label: ({ t }) =>
+            (t as unknown as (k: string) => string)(
+              `plugin-notifications:type${value.charAt(0).toUpperCase()}${value.slice(1)}`,
+            ),
+          value,
+        })),
       },
-      { name: 'read', type: 'checkbox', defaultValue: false, index: true },
+      {
+        name: 'read',
+        type: 'checkbox',
+        defaultValue: false,
+        index: true,
+        label: ({ t }) => (t as unknown as (k: string) => string)('plugin-notifications:read'),
+      },
     ],
+    labels: {
+      plural: ({ t }) => (t as unknown as (k: string) => string)('plugin-notifications:plural'),
+      singular: ({ t }) => (t as unknown as (k: string) => string)('plugin-notifications:singular'),
+    },
     timestamps: true,
   }
 

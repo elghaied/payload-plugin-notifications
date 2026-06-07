@@ -1,7 +1,8 @@
 'use client'
-import { Pill, Popup, toast, useConfig } from '@payloadcms/ui'
+import { Pill, Popup, toast, useConfig, useTranslation } from '@payloadcms/ui'
 import { useCallback, useEffect, useState } from 'react'
 
+import type { PluginNotificationsTranslationKeys, PluginNotificationsTranslations } from '../translations/index.js'
 import type { NotificationItem } from './NotificationRow.js'
 
 import { useMinuteTick } from '../hooks/useMinuteTick.js'
@@ -19,6 +20,7 @@ export const NotificationBell = ({
   slug?: string
 }) => {
   const { config } = useConfig()
+  const { t } = useTranslation<PluginNotificationsTranslations, PluginNotificationsTranslationKeys>()
   const apiRoute = config.routes.api
   const adminRoute = config.routes.admin
   const nowMs = useMinuteTick()
@@ -79,7 +81,7 @@ export const NotificationBell = ({
   return (
     <Popup
       button={
-        <span aria-label="Notifications" className="pn-bell">
+        <span aria-label={t('plugin-notifications:plural')} className="pn-bell">
           <BellIcon size={20} />
           {unreadCount > 0 && <Pill>{unreadCount}</Pill>}
         </span>
@@ -91,14 +93,14 @@ export const NotificationBell = ({
       }}
       render={() => (
         <div className="pn-panel" role="menu" tabIndex={-1}>
-          <div className="pn-title">Notifications</div>
-          {items.length === 0 && <div className="pn-empty">No notifications</div>}
+          <div className="pn-title">{t('plugin-notifications:plural')}</div>
+          {items.length === 0 && <div className="pn-empty">{t('plugin-notifications:empty')}</div>}
           {items.map((n) => (
             <NotificationRow key={n.id} notification={n} nowMs={nowMs} onActivate={activate} size="dropdown" />
           ))}
           {!hideFromNav && (
             <a className="pn-seeall" href={`${adminRoute}/collections/${slug}`}>
-              See all notifications
+              {t('plugin-notifications:seeAll')}
             </a>
           )}
         </div>

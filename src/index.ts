@@ -1,11 +1,14 @@
 import type { Config, Plugin } from 'payload'
 
+import { deepMergeSimple } from 'payload/shared'
+
 import type { NotificationsPluginConfig } from './types.js'
 
 import { createNotificationsCollection } from './collections/notifications.js'
 import { createStreamEndpoint } from './endpoints/stream.js'
 import { createFanoutHook } from './hooks/fanout.js'
 import { notificationRegistry } from './registry/index.js'
+import { translations } from './translations/index.js'
 import { sanitizeConfig } from './types.js'
 
 export const payloadPluginNotifications =
@@ -31,6 +34,13 @@ export const payloadPluginNotifications =
     }
 
     config.collections.push(collection)
+
+    // Merge plugin admin-UI translations (user translations win on conflict). Done before the
+    // `disabled` return so the always-added collection's label functions still resolve.
+    config.i18n = {
+      ...config.i18n,
+      translations: deepMergeSimple(translations, config.i18n?.translations ?? {}),
+    }
 
     if (sanitized.disabled) {
       return config
